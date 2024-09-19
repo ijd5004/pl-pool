@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import streamlit as st
 
 # API endpoint
 url = "https://api.football-data.org/v4/competitions/PL/standings"
@@ -54,3 +55,8 @@ if response.status_code == 200:
     print(epl_table)
 else:
     print(f"Failed to retrieve data. Status code: {response.status_code}")
+
+# Streamlit dashboard
+st.title("English Premier League Table")
+st.write("This is the latest EPL table:")
+st.dataframe(epl_table)
