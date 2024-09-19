@@ -1,0 +1,25 @@
+name: Run EPL Script
+
+on:
+  schedule:
+    # Runs at 7:00 PM EST every Monday (EST is UTC-5 or UTC-4 depending on DST)
+    - cron: '00 00 * * 2'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.12
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run script
+      run: python main-api.py
