@@ -53,6 +53,7 @@ if response.status_code == 200:
 
     # Display the DataFrame
     print(epl_table)
+    #epl_table.to_csv('sample_epl_table.csv')
 else:
     print(f"Failed to retrieve data. Status code: {response.status_code}")
 
