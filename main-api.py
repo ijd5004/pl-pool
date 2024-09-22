@@ -1,104 +1,121 @@
 import requests
 import pandas as pd
 import streamlit as st
+import os
 
-# API endpoint
-url = "https://api.football-data.org/v4/competitions/PL/standings"
+# Constants
+API_URL = "https://api.football-data.org/v4/competitions/PL/standings"
+TOTAL_TEAMS = 20
 
-# Your API key (you need to sign up and get one)
-headers = {'X-Auth-Token': '9dda26884d784e408cd03c8ba42dce43'}
+# Load the API key from an environment variable for security
+API_KEY = os.getenv('PL_DATA_API_KEY', 'your-default-api-key-here')
 
-# Read in PL table predictions
-predictions_df = pd.read_csv('predictions.csv')
-
-# Clean the predictions dataframe (use 'Index' as the index for easier comparison)
-predictions_df = predictions_df.set_index('Index')
-
-# Initialize a dictionary to store the scores for each prediction column
-scores = {col: 0 for col in predictions_df.columns}
-
-# Define the total number of teams in the EPL (typically 20)
-total_teams = 20
+# Headers for API request
+HEADERS = {'X-Auth-Token': API_KEY}
 
 
-# Scoring function that takes in predicted and actual positions and returns a score based on the rules
-def score_prediction(predicted_pos, actual_pos):
-    if predicted_pos == actual_pos:
-        return 10  # Exact match
-    elif abs(predicted_pos - actual_pos) <= 3:
-        return 5  # Within 3 positions
-    elif abs(predicted_pos - actual_pos) <= 5:
-        return 2  # Within 5 positions
-    elif (predicted_pos <= total_teams / 2 and actual_pos <= total_teams / 2) or (
-        predicted_pos > total_teams / 2 and actual_pos > total_teams / 2):
-        return 1  # In the correct half of the table
-    return 0  # No points if none of the conditions are met
+# Function to call the API and retrieve EPL standings
+def fetch_epl_standings():
+    """Fetches the current EPL standings from the Football-Data.org API."""
+    response = requests.get(API_URL, headers=HEADERS)
 
-# Send a GET request to the API
-response = requests.get(url, headers=headers)
-
-# Check if the request was successful
-if response.status_code == 200:
+    if response.status_code != 200:
+        raise Exception(f"Failed to retrieve data. Status code: {response.status_code}")
+    
     data = response.json()
     standings = data['standings'][0]['table']
-    
-    # Extract relevant information
-    teams = []
-    played = []
-    won = []
-    drawn = []
-    lost = []
-    gf = []
-    ga = []
-    gd = []
-    points = []
 
-    for team in standings:
-        teams.append(team['team']['name'])
-        played.append(team['playedGames'])
-        won.append(team['won'])
-        drawn.append(team['draw'])
-        lost.append(team['lost'])
-        gf.append(team['goalsFor'])
-        ga.append(team['goalsAgainst'])
-        gd.append(team['goalDifference'])
-        points.append(team['points'])
-
-    # Create a DataFrame
-    epl_table_df = pd.DataFrame({
-        'Team': teams,
-        'Played': played,
-        'Won': won,
-        'Drawn': drawn,
-        'Lost': lost,
-        'GF': gf,
-        'GA': ga,
-        'GD': gd,
-        'Points': points
+    # Create a DataFrame from the standings data
+    epl_table = pd.DataFrame({
+        'Team': [team['team']['name'] for team in standings],
+        'Played': [team['playedGames'] for team in standings],
+        'Won': [team['won'] for team in standings],
+        'Drawn': [team['draw'] for team in standings],
+        'Lost': [team['lost'] for team in standings],
+        'GF': [team['goalsFor'] for team in standings],
+        'GA': [team['goalsAgainst'] for team in standings],
+        'GD': [team['goalDifference'] for team in standings],
+        'Points': [team['points'] for team in standings]
     })
 
-    # Display the DataFrame
-    print(epl_table_df)
-    #epl_table.to_csv('sample_epl_table.csv')
+    epl_table['Position'] = epl_table.index + 1  # Assign position based on index
+    return epl_table
 
-    # Clean up the EPL table, keeping only the relevant columns (Team name and Position)
-    epl_table_df = epl_table_df[['Team']]  # Keep only the team names
-    epl_table_df['Position'] = epl_table_df.index + 1  # Add a Position column (since index starts from 0)
 
-    # Score each prediction for every team
+# Function to score predictions against the actual standings
+def score_predictions(epl_table, predictions_df):
+    """
+    Scores predictions based on their position relative to the actual EPL table.
+    Arguments:
+    - epl_table: DataFrame containing the actual EPL standings
+    - predictions_df: DataFrame containing the predicted standings
+
+    Returns:
+    - scores_df: DataFrame containing the scores for each prediction
+    """
+    scores = {col: 0 for col in predictions_df.columns}
+
+    def score_prediction(predicted_pos, actual_pos):
+        """Applies the scoring rules to a prediction."""
+        if predicted_pos == actual_pos:
+            return 10
+        elif abs(predicted_pos - actual_pos) <= 3:
+            return 5
+        elif abs(predicted_pos - actual_pos) <= 5:
+            return 2
+        elif (predicted_pos <= TOTAL_TEAMS / 2 and actual_pos <= TOTAL_TEAMS / 2) or (
+            predicted_pos > TOTAL_TEAMS / 2 and actual_pos > TOTAL_TEAMS / 2):
+            return 1
+        return 0
+
+    # Score each prediction for each team
     for col in predictions_df.columns:
         for idx, predicted_team in predictions_df[col].items():
-            if predicted_team in epl_table_df['Team'].values:
-                actual_pos = epl_table_df[epl_table_df['Team'] == predicted_team]['Position'].values[0]
+            if predicted_team in epl_table['Team'].values:
+                actual_pos = epl_table[epl_table['Team'] == predicted_team]['Position'].values[0]
                 predicted_pos = idx  # The index in predictions_df is the predicted position
                 scores[col] += score_prediction(predicted_pos, actual_pos)
 
-    # Convert the scores to a DataFrame for easier viewing; sort by Score
-    scores_df = pd.DataFrame(list(scores.items()), columns=['Prediction', 'Score']).sort_values(by=['Score'], ascending=False)
-    print(scores_df)
+    # Create Prediction Score dataframe
+    df = pd.DataFrame(list(scores.items()), columns=['Prediction', 'Score'])
     
-    # Streamlit dashboard
-    st.title("Diamond Dawgs PL Predction")
+    # Sort the datafram by Score
+    df = df.sort_values(by=['Score'], ascending=False)
+    
+    # Reset the dataframe index and start the index at 1
+    df.reset_index(drop=True, inplace=True)
+    df.index = df.index + 1
+    print(df)
+
+    return df
+
+
+# Function to display the data on a Streamlit dashboard
+def display_dashboard(epl_table, scores_df):
+    """Displays the EPL table and prediction scores on a Streamlit dashboard."""
+    #st.title("English Premier League Table")
+    #st.write("This is the latest EPL table:")
+    #st.dataframe(epl_table)
+
+    st.title("Diamon Dawg Prediction Scores")
     st.dataframe(scores_df)
-else:
-    print(f"Failed to retrieve data. Status code: {response.status_code}")
+
+
+# Main execution
+if __name__ == "__main__":
+    try:
+        # Load the predictions CSV (add your file path if running locally)
+        predictions_df = pd.read_csv("predictions.csv")
+        predictions_df = predictions_df.set_index('Index')
+
+        # Fetch the EPL standings
+        epl_table = fetch_epl_standings()
+
+        # Score the predictions
+        scores_df = score_predictions(epl_table, predictions_df)
+
+        # Display the results in the Streamlit app
+        display_dashboard(epl_table, scores_df)
+
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
