@@ -106,10 +106,13 @@ def display_dashboard(epl_table, scores_df):
     #st.dataframe(epl_table)
 
     st.title("Diamond Dawg Prediction Pool")
+    
+    # Display the predictions with logos and scores in a table-like layout using Streamlit's columns
     for i, row in scores_df.iterrows():
-        col1, col2 = st.columns([1, 4])
-        col1.image(row['Logo'], width=50)  # Display logo
-        col2.write(f"**{row['Prediction']}**: {row['Score']} points")
+        col1, col2, col3 = st.columns([3, 2, 1])  # Define the widths of the columns
+        col1.write(f"**{row['Prediction']}**")
+        col2.write(f"{row['Score']} points")
+        col3.image(row['Logo'], width=50)
 
 
 # Main execution
