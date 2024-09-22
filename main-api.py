@@ -8,7 +8,8 @@ API_URL = "https://api.football-data.org/v4/competitions/PL/standings"
 TOTAL_TEAMS = 20
 
 # Load the API key from an environment variable for security
-API_KEY = os.getenv('PL_DATA_API_KEY', 'your-default-api-key-here')
+#API_KEY = os.getenv('PL_DATA_API_KEY', 'your-default-api-key-here')
+API_KEY = '9dda26884d784e408cd03c8ba42dce43'
 
 # Headers for API request
 HEADERS = {'X-Auth-Token': API_KEY}
