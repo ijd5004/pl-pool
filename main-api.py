@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 import streamlit as st
-import os
+#import os
 
 # Constants
 API_URL = "https://api.football-data.org/v4/competitions/PL/standings"
