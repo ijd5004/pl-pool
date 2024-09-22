@@ -13,6 +13,14 @@ API_KEY = os.getenv('PL_DATA_API_KEY', 'your-default-api-key-here')
 # Headers for API request
 HEADERS = {'X-Auth-Token': API_KEY}
 
+# Dictionary mapping team names to logo URLs (you can replace these with actual URLs or paths)
+LOGO_URLS = {
+    'IncogNeto': 'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',  # Chelsea FC
+    'Sonny\'s Soldiers': 'https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg',  # Tottenham Hotspur FC
+    'Vardy Party': 'https://upload.wikimedia.org/wikipedia/hif/a/ab/Leicester_City_crest.png',  # Leicester City FC
+    'Wolf Cola': 'https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg',  # Wolverhampton Wanderers FC
+    'Championship Playoff Champions': 'https://upload.wikimedia.org/wikipedia/en/c/c9/FC_Southampton.svg'  # Southampton FC
+}
 
 # Function to call the API and retrieve EPL standings
 def fetch_epl_standings():
@@ -78,6 +86,7 @@ def score_predictions(epl_table, predictions_df):
 
     # Create Prediction Score dataframe
     df = pd.DataFrame(list(scores.items()), columns=['Prediction', 'Score'])
+    df['Logo'] = df['Prediction'].map(LOGO_URLS)
     
     # Sort the datafram by Score
     df = df.sort_values(by=['Score'], ascending=False)
@@ -85,7 +94,6 @@ def score_predictions(epl_table, predictions_df):
     # Reset the dataframe index and start the index at 1
     df.reset_index(drop=True, inplace=True)
     df.index = df.index + 1
-    print(df)
 
     return df
 
@@ -97,8 +105,11 @@ def display_dashboard(epl_table, scores_df):
     #st.write("This is the latest EPL table:")
     #st.dataframe(epl_table)
 
-    st.title("Diamon Dawg Prediction Scores")
-    st.dataframe(scores_df)
+    st.title("Diamond Dawg Prediction Pool")
+    for i, row in scores_df.iterrows():
+        col1, col2 = st.columns([1, 4])
+        col1.image(row['Logo'], width=50)  # Display logo
+        col2.write(f"**{row['Prediction']}**: {row['Score']} points")
 
 
 # Main execution
