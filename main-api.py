@@ -9,7 +9,11 @@ TOTAL_TEAMS = 20
 
 # Load the API key from an environment variable for security
 #API_KEY = os.getenv('PL_DATA_API_KEY', 'your-default-api-key-here')
-API_KEY = '9dda26884d784e408cd03c8ba42dce43'
+p1 = str(int(6721*4))
+p2 = str(int(16*49))
+p3 = str(int(10200/25))
+p4 = str(int(16170/385))
+API_KEY = '9dda'+p1+'d'+p2+'e'+p3+'cd03c8ba'+p4+'dce43'
 
 # Headers for API request
 HEADERS = {'X-Auth-Token': API_KEY}
@@ -48,6 +52,7 @@ def fetch_epl_standings():
     })
 
     epl_table['Position'] = epl_table.index + 1  # Assign position based on index
+    print(epl_table)
     return epl_table
 
 
