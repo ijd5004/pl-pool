@@ -51,7 +51,8 @@ def fetch_epl_standings():
         'Points': [team['points'] for team in standings]
     })
 
-    epl_table['Position'] = epl_table.index + 1  # Assign position based on index
+    # Increase the index by 1 to have it match the first position in the table.
+    epl_table.index = epl_table.index + 1
     return epl_table
 
 
@@ -94,7 +95,7 @@ def score_predictions(epl_table, predictions_df):
         if '_Score' not in col:  # Ignore score columns
             for idx, predicted_team in predictions_df[col].items():
                 if predicted_team in epl_table['Team'].values:
-                    actual_pos = epl_table[epl_table['Team'] == predicted_team]['Position'].values[0]
+                    actual_pos = epl_table[epl_table['Team'] == predicted_team].index
                     predicted_pos = idx  # The index in predictions_df is the predicted position
                     score = score_prediction(predicted_pos, actual_pos)
                     predictions_df.at[idx, f'{col}_Score'] = score  # Store score for each prediction
