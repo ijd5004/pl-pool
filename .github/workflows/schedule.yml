@@ -3,7 +3,7 @@ name: Run EPL Script
 on:
   schedule:
     # Runs at 7:00 PM EST every Monday (EST is UTC-5 or UTC-4 depending on DST)
-    - cron: '00 00 * * 2'
+    - cron: '00 23 * * *'
   workflow_dispatch:
 
 jobs:
