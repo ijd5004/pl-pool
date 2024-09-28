@@ -73,6 +73,9 @@ def score_predictions(epl_table, predictions_df):
     for col in predictions_df.columns:
         predictions_df[f'{col}_Score'] = 0
 
+    # Reorder columns alphabetically
+    predictions_df = predictions_df[sorted(predictions_df.columns)]
+
     def score_prediction(predicted_pos, actual_pos):
         """Applies the scoring rules to a prediction."""
         if predicted_pos == actual_pos:
