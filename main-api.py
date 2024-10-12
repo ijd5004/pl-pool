@@ -10,12 +10,11 @@ import os
 API_URL = "https://api.football-data.org/v4/competitions/PL/standings"
 TOTAL_TEAMS = 20
 
-# Try to retrieve the API key from local environment variables
+# Try to retrieve the API key from environment variables
 API_KEY = os.getenv('PL_DATA_API_KEY')
-# Load API key from GitHub if not found locally
+# Check that API key was loaded.
 if not API_KEY:
-    with open('api_key.txt', 'r') as f:
-        API_KEY = f.read().strip()
+   raise ValueError("API_KEY environment variable is missing")
 
 # Headers for API request
 HEADERS = {'X-Auth-Token': API_KEY}
