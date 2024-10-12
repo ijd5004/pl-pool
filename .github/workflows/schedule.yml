@@ -22,5 +22,12 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
 
+    # Set up Firebase Credentials from GitHub Secret
+    - name: Set up Firebase credentials
+      run: echo "$FIREBASE_SERVICE_ACCOUNT" > firebase-key.json
+      env:
+        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
+
     - name: Run script
       run: python main-api.py

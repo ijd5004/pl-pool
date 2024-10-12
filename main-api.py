@@ -1,19 +1,17 @@
 import requests
 import pandas as pd
 import streamlit as st
-#import os
+import firebase_admin
+from firebase_admin import credentials, firestore
+from datetime import datetime
+import os
 
 # Constants
 API_URL = "https://api.football-data.org/v4/competitions/PL/standings"
 TOTAL_TEAMS = 20
 
 # Load the API key from an environment variable for security
-#API_KEY = os.getenv('PL_DATA_API_KEY', 'your-default-api-key-here')
-p1 = str(int(6721*4))
-p2 = str(int(16*49))
-p3 = str(int(10200/25))
-p4 = str(int(16170/385))
-API_KEY = '9dda'+p1+'d'+p2+'e'+p3+'cd03c8ba'+p4+'dce43'
+API_KEY = os.getenv('PL_DATA_API_KEY')
 
 # Headers for API request
 HEADERS = {'X-Auth-Token': API_KEY}
@@ -26,6 +24,16 @@ LOGO_URLS = {
     'Wolf Cola': 'https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg',  # Wolverhampton Wanderers FC
     'Championship Playoff Champions': 'https://upload.wikimedia.org/wikipedia/en/c/c9/FC_Southampton.svg'  # Southampton FC
 }
+
+# Firebase Initialization
+def initialize_firebase():
+    # Local path
+    #cred = credentials.Certificate("C:\\IJD\\git\\pl-pool-files\\epl-prediction-tracker-firebase-adminsdk-n3wlp-3a34efb47d.json")  # Path to your service account JSON key
+    # GitHub Action path
+    cred = credentials.Certificate("firebase-key.json")
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    return db
 
 # Function to call the API and retrieve EPL standings
 def fetch_epl_standings():
@@ -57,7 +65,8 @@ def fetch_epl_standings():
 
 
 # Function to score predictions against the actual standings and update predictions_df with scores
-def score_predictions(epl_table, predictions_df):
+# Function also to store in Firestore
+def score_predictions_and_store(db, epl_table, predictions_df):
     """
     Scores predictions based on their position relative to the actual EPL table.
     Arguments:
@@ -69,6 +78,7 @@ def score_predictions(epl_table, predictions_df):
     - predictions_df: Updated with the score for each predicted position
     """
     scores = {col: 0 for col in predictions_df.columns}
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Add a new column for storing scores in the predictions DataFrame
     for col in predictions_df.columns:
@@ -95,7 +105,7 @@ def score_predictions(epl_table, predictions_df):
         if '_Score' not in col:  # Ignore score columns
             for idx, predicted_team in predictions_df[col].items():
                 if predicted_team in epl_table['Team'].values:
-                    actual_pos = epl_table[epl_table['Team'] == predicted_team].index
+                    actual_pos = epl_table[epl_table['Team'] == predicted_team].index[0]
                     predicted_pos = idx  # The index in predictions_df is the predicted position
                     score = score_prediction(predicted_pos, actual_pos)
                     predictions_df.at[idx, f'{col}_Score'] = score  # Store score for each prediction
@@ -105,6 +115,10 @@ def score_predictions(epl_table, predictions_df):
     scores_df = pd.DataFrame(list(scores.items()), columns=['Prediction', 'Score'])
     scores_df['Logo'] = scores_df['Prediction'].map(LOGO_URLS)
     
+    # Store the scores in Firestore
+    doc_ref = db.collection("prediction_scores").document(current_time)
+    doc_ref.set(scores)
+
     # Sort the dataframe by Score
     scores_df = scores_df.sort_values(by=['Score'], ascending=False)
     
@@ -114,14 +128,29 @@ def score_predictions(epl_table, predictions_df):
 
     return scores_df, predictions_df
 
+# Function to load historical scores from Firestore
+def load_historical_scores(db):
+    """Fetches all prediction scores from Firestore."""
+    scores_ref = db.collection("prediction_scores")
+    docs = scores_ref.stream()
+    all_scores = []
+    for doc in docs:
+        score_data = doc.to_dict()
+        score_data['Date'] = doc.id  # Use the document ID (timestamp) as the Date
+        all_scores.append(score_data)
+    
+    if all_scores:
+        return pd.DataFrame(all_scores)
+    else:
+        return pd.DataFrame()  # Return empty DataFrame if no scores found
 
 # Function to display the data on a Streamlit dashboard
-def display_dashboard(epl_table, scores_df, predictions_df):
+def display_dashboard(epl_table, scores_df, predictions_df, historical_scores):
     """Displays the prediction scores, prediction details, 
     and EPL table on a Streamlit dashboard using tabs."""
     
     # Create tabs for the different sections of the dashboard
-    tab1, tab2, tab3 = st.tabs(["Prediction Scores", "Prediction Details", "EPL Table"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Prediction Scores", "Prediction Details", "EPL Table", "Score History"])
 
     with tab1:
         st.title("Diamond Dawg Prediction Pool")
@@ -139,9 +168,30 @@ def display_dashboard(epl_table, scores_df, predictions_df):
         st.title("Latest EPL Table")
         st.dataframe(epl_table)
 
+    with tab4:
+        st.title("Scores Over Time")
+        if not historical_scores.empty:
+            try:
+                # Set the 'Date' column as the index for plotting
+                historical_scores.set_index('Date', inplace=True)
+                
+                # Ensure the DataFrame has valid numeric data to plot
+                if historical_scores.select_dtypes(include=['number']).empty:
+                    st.error("No valid score data to display in the chart.")
+                else:
+                    # Plot the chart with all prediction columns over time
+                    st.line_chart(historical_scores)
+            except KeyError as e:
+                st.error(f"An error occurred: {e}")
+        else:
+            st.write("No historical data available.")
+
 # Main execution
 if __name__ == "__main__":
     try:
+        # Initialize Firebase
+        db = initialize_firebase()
+
         # Load the predictions CSV (add your file path if running locally)
         predictions_df = pd.read_csv("predictions.csv")
         predictions_df = predictions_df.set_index('Index')
@@ -150,12 +200,16 @@ if __name__ == "__main__":
         epl_table = fetch_epl_standings()
 
         # Score the predictions and update the predictions DataFrame with individual scores
-        scores_df, updated_predictions_df = score_predictions(epl_table, predictions_df)
+        # Also store the scores in Firestone
+        scores_df, updated_predictions_df = score_predictions_and_store(db, epl_table, predictions_df)
         print(scores_df)
         print(updated_predictions_df)
 
-        # Display the results in the Streamlit app using tabs
-        display_dashboard(epl_table, scores_df, updated_predictions_df)
+        # Load historical scores from Firestore
+        historical_scores = load_historical_scores(db)
+
+        # Display the dashboard
+        display_dashboard(epl_table, scores_df, updated_predictions_df, historical_scores)
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
