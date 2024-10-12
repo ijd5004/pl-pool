@@ -20,12 +20,7 @@ jobs:
         python-version: 3.12
 
     - name: Install dependencies
-      run: pip install -r requirements.txt
-
-    - name: Set up API key
-      run: echo "$PL_DATA_API_KEY" > api_key.txt
-      env:
-        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
+      run: pip install -r requirements.txt      
 
       # Set up Firebase Credentials from GitHub Secret
     - name: Set up Firebase credentials
@@ -35,3 +30,5 @@ jobs:
 
     - name: Run script
       run: python main-api.py
+      env:
+        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
