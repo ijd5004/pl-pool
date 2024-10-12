@@ -22,6 +22,11 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt      
 
+    - name: Debug environment
+      run: echo "API_KEY is $PL_DATA_API_KEY"
+      env:
+        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
+
       # Set up Firebase Credentials from GitHub Secret
     - name: Set up Firebase credentials
       run: echo "$FIREBASE_SERVICE_ACCOUNT" > firebase-key.json
