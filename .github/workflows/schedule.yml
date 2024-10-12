@@ -3,7 +3,7 @@ name: Run EPL Script
 on:
   schedule:
     # Runs at 7:00 PM EST every Monday (EST is UTC-5 or UTC-4 depending on DST)
-    - cron: '00 23 * * *'
+    - cron: '00 00 * * *'
   workflow_dispatch:
 
 jobs:
@@ -22,12 +22,16 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
 
-    # Set up Firebase Credentials from GitHub Secret
+    - name: Set up API key
+      run: echo "$PL_DATA_API_KEY" > api_key.txt
+      env:
+        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
+
+      # Set up Firebase Credentials from GitHub Secret
     - name: Set up Firebase credentials
       run: echo "$FIREBASE_SERVICE_ACCOUNT" > firebase-key.json
       env:
         FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
 
     - name: Run script
       run: python main-api.py
