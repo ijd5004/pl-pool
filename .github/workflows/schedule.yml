@@ -23,7 +23,13 @@ jobs:
       run: pip install -r requirements.txt      
 
     - name: Debug environment
-      run: echo "API_KEY is $PL_DATA_API_KEY"
+      run: |
+        echo "Checking if PL_DATA_API_KEY exists..."
+        if [ -z "$PL_DATA_API_KEY" ]; then
+          echo "PL_DATA_API_KEY is missing"
+        else
+          echo "PL_DATA_API_KEY is set"
+        fi
       env:
         PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
 
