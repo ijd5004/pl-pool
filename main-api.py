@@ -10,8 +10,12 @@ import os
 API_URL = "https://api.football-data.org/v4/competitions/PL/standings"
 TOTAL_TEAMS = 20
 
-# Load the API key from an environment variable for security
+# Try to retrieve the API key from local environment variables
 API_KEY = os.getenv('PL_DATA_API_KEY')
+# Load API key from GitHub if not found locally
+if not API_KEY:
+    with open('api_key.txt', 'r') as f:
+        API_KEY = f.read().strip()
 
 # Headers for API request
 HEADERS = {'X-Auth-Token': API_KEY}
