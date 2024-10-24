@@ -24,3 +24,6 @@ jobs:
 
     - name: Run script
       run: python main-api.py
+      env:
+        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
+        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

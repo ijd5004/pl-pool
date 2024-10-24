@@ -39,8 +39,12 @@ def initialize_firebase():
     # Local path
     #cred = credentials.Certificate("C:\\IJD\\git\\pl-pool-files\\epl-prediction-tracker-firebase-adminsdk-n3wlp-3a34efb47d.json")  # Path to your service account JSON key
     
-    # Load the Firebase service account credentials from Streamlit secrets
-    firebase_credentials = json.loads(st.secrets["FIREBASE_SERVICE_ACCOUNT"])
+    # Check if running in Streamlit Cloud
+    if "FIREBASE_SERVICE_ACCOUNT" in st.secrets:
+        firebase_credentials = json.loads(st.secrets["FIREBASE_SERVICE_ACCOUNT"])
+    else:
+        # Running locally or in GitHub Actions
+        firebase_credentials = json.loads(os.getenv('FIREBASE_SERVICE_ACCOUNT'))
 
     # Initialize Firebase with the credentials
     cred = credentials.Certificate(firebase_credentials)
