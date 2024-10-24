@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
     
     steps:
     - name: Checkout code
@@ -30,8 +32,8 @@ jobs:
         else
           echo "PL_DATA_API_KEY is set"
         fi
-      env:
-        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
+      #env:
+      #  PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
 
       # Set up Firebase Credentials from GitHub Secret
     - name: Set up Firebase credentials
@@ -41,5 +43,3 @@ jobs:
 
     - name: Run script
       run: python main-api.py
-      env:
-        PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
