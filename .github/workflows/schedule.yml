@@ -9,8 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
     
     steps:
     - name: Checkout code
@@ -23,23 +21,6 @@ jobs:
 
     - name: Install dependencies
       run: pip install -r requirements.txt      
-
-    - name: Debug environment
-      run: |
-        echo "Checking if PL_DATA_API_KEY exists..."
-        if [ -z "$PL_DATA_API_KEY" ]; then
-          echo "PL_DATA_API_KEY is missing"
-        else
-          echo "PL_DATA_API_KEY is set"
-        fi
-      #env:
-      #  PL_DATA_API_KEY: ${{ secrets.PL_DATA_API_KEY }}
-
-      # Set up Firebase Credentials from GitHub Secret
-    - name: Set up Firebase credentials
-      run: echo "$FIREBASE_SERVICE_ACCOUNT" > firebase-key.json
-      env:
-        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
     - name: Run script
       run: python main-api.py

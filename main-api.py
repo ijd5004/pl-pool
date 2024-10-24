@@ -5,13 +5,19 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
 import os
+import json
 
 # Constants
 API_URL = "https://api.football-data.org/v4/competitions/PL/standings"
 TOTAL_TEAMS = 20
 
-# Try to retrieve the API key from environment variables
-API_KEY = os.getenv('PL_DATA_API_KEY')
+# Check if the app is running in Streamlit Cloud
+if "PL_DATA_API_KEY" in st.secrets:
+    # Running in Streamlit Cloud
+    API_KEY = st.secrets["PL_DATA_API_KEY"]
+else:
+    # Try to retrieve the API key from environment variables
+    API_KEY = os.getenv('PL_DATA_API_KEY')
 # Check that API key was loaded.
 if not API_KEY:
    raise ValueError("API_KEY environment variable is missing")
@@ -32,8 +38,12 @@ LOGO_URLS = {
 def initialize_firebase():
     # Local path
     #cred = credentials.Certificate("C:\\IJD\\git\\pl-pool-files\\epl-prediction-tracker-firebase-adminsdk-n3wlp-3a34efb47d.json")  # Path to your service account JSON key
-    # GitHub Action path
-    cred = credentials.Certificate("firebase-key.json")
+    
+    # Load the Firebase service account credentials from Streamlit secrets
+    firebase_credentials = json.loads(st.secrets["FIREBASE_SERVICE_ACCOUNT"])
+
+    # Initialize Firebase with the credentials
+    cred = credentials.Certificate(firebase_credentials)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
     return db
