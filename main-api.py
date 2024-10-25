@@ -19,6 +19,12 @@ def is_streamlit():
     except FileNotFoundError:
         return False
 
+# Debug check
+if is_streamlit():
+    st.write(f"API_KEY from st.secrets: {st.secrets['DTEST']}")
+else:
+    st.write("Not running in Streamlit Cloud. Secrets not found.")
+
 # Check if the app is running in Streamlit Cloud
 if is_streamlit():
     # Running in Streamlit Cloud
