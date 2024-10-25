@@ -19,12 +19,6 @@ def is_streamlit():
     except FileNotFoundError:
         return False
 
-# Debug check
-if is_streamlit():
-    st.write(f"API_KEY from st.secrets: {st.secrets['PL_DATA_API_KEY']}")
-else:
-    st.write("Not running in Streamlit Cloud. Secrets not found.")
-
 # Check if the app is running in Streamlit Cloud
 if is_streamlit():
     # Running in Streamlit Cloud
@@ -34,6 +28,7 @@ else:
     API_KEY = os.getenv('PL_DATA_API_KEY')
 # Check that API key was loaded.
 if not API_KEY:
+   st.write(f"API_KEY is missing.")
    raise ValueError("API_KEY environment variable is missing")
 
 # Headers for API request
@@ -62,6 +57,7 @@ def initialize_firebase():
 
     # Check that Firebase credentials were loaded.
     if not firebase_credentials:
+        st.write(f"Firebase credentials is missing.")
         raise ValueError("FIREBASE_SERVICE_ACCOUNT environment variable is missing")
 
     # Initialize Firebase with the credentials
