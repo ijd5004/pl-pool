@@ -60,9 +60,11 @@ def initialize_firebase():
         st.write(f"Firebase credentials is missing.")
         raise ValueError("FIREBASE_SERVICE_ACCOUNT environment variable is missing")
 
-    # Initialize Firebase with the credentials
-    cred = credentials.Certificate(firebase_credentials)
-    firebase_admin.initialize_app(cred)
+    # Check if the app is already initialized
+    if not firebase_admin._apps:
+        # Initialize Firebase with the credentials
+        cred = credentials.Certificate(firebase_credentials)
+        firebase_admin.initialize_app(cred)
     db = firestore.client()
     return db
 
