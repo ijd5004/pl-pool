@@ -21,14 +21,14 @@ def is_streamlit():
 
 # Debug check
 if is_streamlit():
-    st.write(f"API_KEY from st.secrets: {st.secrets['DTEST']}")
+    st.write(f"API_KEY from st.secrets: {st.secrets['PL_DATA_API_KEY']}")
 else:
     st.write("Not running in Streamlit Cloud. Secrets not found.")
 
 # Check if the app is running in Streamlit Cloud
 if is_streamlit():
     # Running in Streamlit Cloud
-    API_KEY = st.secrets["PL_DATA_API_KEY"]
+    API_KEY = st.secrets['PL_DATA_API_KEY']
 else:
     # Try to retrieve the API key from environment variables
     API_KEY = os.getenv('PL_DATA_API_KEY')
