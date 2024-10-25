@@ -12,7 +12,7 @@ API_URL = "https://api.football-data.org/v4/competitions/PL/standings"
 TOTAL_TEAMS = 20
 
 # Check if the app is running in Streamlit Cloud
-if "PL_DATA_API_KEY" in st.secrets:
+if hasattr(st, "secrets") and "PL_DATA_API_KEY" in st.secrets:
     # Running in Streamlit Cloud
     API_KEY = st.secrets["PL_DATA_API_KEY"]
 else:
@@ -40,11 +40,15 @@ def initialize_firebase():
     #cred = credentials.Certificate("C:\\IJD\\git\\pl-pool-files\\epl-prediction-tracker-firebase-adminsdk-n3wlp-3a34efb47d.json")  # Path to your service account JSON key
     
     # Check if running in Streamlit Cloud
-    if "FIREBASE_SERVICE_ACCOUNT" in st.secrets:
+    if hasattr(st, "secrets") and "FIREBASE_SERVICE_ACCOUNT" in st.secrets:
         firebase_credentials = json.loads(st.secrets["FIREBASE_SERVICE_ACCOUNT"])
     else:
         # Running locally or in GitHub Actions
         firebase_credentials = json.loads(os.getenv('FIREBASE_SERVICE_ACCOUNT'))
+
+    # Check that Firebase credentials were loaded.
+    if not firebase_credentials:
+        raise ValueError("FIREBASE_SERVICE_ACCOUNT environment variable is missing")
 
     # Initialize Firebase with the credentials
     cred = credentials.Certificate(firebase_credentials)
