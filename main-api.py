@@ -148,9 +148,11 @@ def score_predictions_and_store(db, epl_table, predictions_df):
     scores_df = pd.DataFrame(list(scores.items()), columns=['Prediction', 'Score'])
     scores_df['Logo'] = scores_df['Prediction'].map(LOGO_URLS)
     
+    ''' 5-27-2025: Stop writing to the datbase now that the season is over
     # Store the scores in Firestore
     doc_ref = db.collection("prediction_scores").document(current_time)
     doc_ref.set(scores)
+    '''
 
     # Sort the dataframe by Score
     scores_df = scores_df.sort_values(by=['Score'], ascending=False)
